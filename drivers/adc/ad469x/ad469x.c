@@ -914,9 +914,9 @@ int32_t ad469x_init(struct ad469x_dev **device,
 	if (ret != 0)
 		goto error_gpio;
 
-	ret = ad469x_reset_dev(dev);
-	if (ret != 0)
-		goto error_spi;
+//	ret = ad469x_reset_dev(dev);
+	//if (ret != 0)
+		//goto error_spi;
 
 #if !defined(USE_STANDARD_SPI)
 	dev->offload_init_param = init_param->offload_init_param;

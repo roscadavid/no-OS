@@ -154,7 +154,7 @@ CFLAGS		+= -I$(BUILD_DIR)/bsp/$(ARCH)/include
 
 $(PLATFORM)_sdkopen:
 ifeq '' '$(filter %.hdf, $(HARDWARE))'
-	vitis -workspace=$(WORKSPACE)
+	vitis --classic --workspace $(WORKSPACE)
 else
 	xsdk -workspace=$(WORKSPACE)
 endif
