@@ -39,6 +39,12 @@
 #include "no_os_error.h"
 #include "ad5592r-base.h"
 #include "ad5592r.h"
+#include "spi_engine.h"
+#include "no_os_delay.h"
+#include "no_os_error.h"
+#include "no_os_util.h"
+#include "no_os_alloc.h"
+
 
 const struct ad5592r_rw_ops ad5592r_rw_ops = {
 	.write_dac = ad5592r_write_dac,
@@ -48,6 +54,7 @@ const struct ad5592r_rw_ops ad5592r_rw_ops = {
 	.reg_read = ad5592r_reg_read,
 	.gpio_read = ad5592r_gpio_read,
 };
+
 
 /**
  * Write NOP and read value.
@@ -60,16 +67,27 @@ static int32_t ad5592r_spi_wnop_r16(struct ad5592r_dev *dev, uint16_t *buf)
 {
 	int32_t ret;
 	uint16_t spi_msg_nop = 0; /* NOP */
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+		if (ret != 0)
+			return ret;
+
+		spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	ret = no_os_spi_write_and_read(dev->spi, (uint8_t *)&spi_msg_nop,
 				       sizeof(spi_msg_nop));
 	if (ret < 0)
 		return ret;
+	ret = spi_engine_set_transfer_width(dev->spi,
+						    dev->capture_data_width);
+		if (ret != 0)
+			return ret;
 
-	*buf = swab16(spi_msg_nop);
-
+		spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
+		*buf = swab16(spi_msg_nop);
 	return ret;
 }
+
+
 
 /**
  * Write DAC channel.
@@ -82,13 +100,27 @@ static int32_t ad5592r_spi_wnop_r16(struct ad5592r_dev *dev, uint16_t *buf)
 int32_t ad5592r_write_dac(struct ad5592r_dev *dev, uint8_t chan,
 			  uint16_t value)
 {
+	int32_t ret;
 	if (!dev)
 		return -1;
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+	if (ret != 0)
+			return ret;
+
+	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	dev->spi_msg = swab16( NO_OS_BIT(15) | (uint16_t)(chan << 12) | value);
 
-	return no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
+	ret = no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
 					sizeof(dev->spi_msg));
+	ret = spi_engine_set_transfer_width(dev->spi,
+						    dev->capture_data_width);
+	if (ret != 0)
+			return ret;
+
+	spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
+
+	return ret;
 }
 
 /**
@@ -106,6 +138,11 @@ int32_t ad5592r_read_adc(struct ad5592r_dev *dev, uint8_t chan,
 
 	if (!dev)
 		return -1;
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+	if (ret != 0)
+		return ret;
+
+	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	dev->spi_msg = swab16((uint16_t)(AD5592R_REG_ADC_SEQ << 11) |
 			      NO_OS_BIT(chan));
@@ -114,6 +151,12 @@ int32_t ad5592r_read_adc(struct ad5592r_dev *dev, uint8_t chan,
 				       sizeof(dev->spi_msg));
 	if (ret < 0)
 		return ret;
+	ret = spi_engine_set_transfer_width(dev->spi,
+						    dev->capture_data_width);
+		if (ret != 0)
+			return ret;
+
+		spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
 
 	/*
 	 * Invalid data:
@@ -149,7 +192,11 @@ int32_t ad5592r_multi_read_adc(struct ad5592r_dev *dev, uint16_t chans,
 
 	if (!dev)
 		return -1;
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+		if (ret != 0)
+			return ret;
 
+	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 	samples = no_os_hweight16(chans);
 
 	dev->spi_msg = swab16((uint16_t)(AD5592R_REG_ADC_SEQ << 11) | chans);
@@ -158,7 +205,12 @@ int32_t ad5592r_multi_read_adc(struct ad5592r_dev *dev, uint16_t chans,
 				       sizeof(dev->spi_msg));
 	if (ret < 0)
 		return ret;
+	ret = spi_engine_set_transfer_width(dev->spi,
+					    dev->capture_data_width);
+	if (ret != 0)
+		return ret;
 
+	spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
 	/*
 	 * Invalid data:
 	 * See Figure 40. Single-Channel ADC Conversion Sequence
@@ -187,13 +239,26 @@ int32_t ad5592r_multi_read_adc(struct ad5592r_dev *dev, uint16_t chans,
  */
 int32_t ad5592r_reg_write(struct ad5592r_dev *dev, uint8_t reg, uint16_t value)
 {
+	int32_t ret;
 	if (!dev)
 		return -1;
+		ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+		if (ret != 0)
+			return ret;
+
+		spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	dev->spi_msg = swab16((reg << 11) | value);
+	ret = no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
+						sizeof(dev->spi_msg));
+	ret = spi_engine_set_transfer_width(dev->spi,
+						    dev->capture_data_width);
+		if (ret != 0)
+			return ret;
 
-	return no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
-					sizeof(dev->spi_msg));
+		spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
+		return ret;
+
 }
 
 /**
@@ -210,7 +275,11 @@ int32_t ad5592r_reg_read(struct ad5592r_dev *dev, uint8_t reg, uint16_t *value)
 
 	if (!dev)
 		return -1;
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+		if (ret != 0)
+			return ret;
 
+	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 	dev->spi_msg = swab16((AD5592R_REG_LDAC << 11) |
 			      AD5592R_LDAC_READBACK_EN | (reg << 2) | dev->ldac_mode);
 
@@ -218,7 +287,12 @@ int32_t ad5592r_reg_read(struct ad5592r_dev *dev, uint8_t reg, uint16_t *value)
 				       sizeof(dev->spi_msg));
 	if (ret < 0)
 		return ret;
+	ret = spi_engine_set_transfer_width(dev->spi,
+					    dev->capture_data_width);
+	if (ret != 0)
+		return ret;
 
+	spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
 	ret = ad5592r_spi_wnop_r16(dev, &dev->spi_msg);
 	if (ret < 0)
 		return ret;
@@ -241,11 +315,22 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
 
 	if (!dev)
 		return -1;
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+	if (ret != 0)
+		return ret;
+	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	ret = ad5592r_reg_write(dev, AD5592R_REG_GPIO_IN_EN,
 				AD5592R_GPIO_READBACK_EN | dev->gpio_in);
 	if (ret < 0)
 		return ret;
+
+	ret = spi_engine_set_transfer_width(dev->spi,
+					    dev->capture_data_width);
+	if (ret != 0)
+		return ret;
+
+	spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
 
 	ret = ad5592r_spi_wnop_r16(dev, &dev->spi_msg);
 	if (ret < 0)
@@ -256,6 +341,7 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
 	return 0;
 }
 
+
 /**
  * Initialize AD5593r device.
  *
@@ -263,33 +349,119 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
  * @param init_param - The initial parameters of the device.
  * @return 0 in case of success, negative error code otherwise
  */
+//int32_t ad5592r_init(struct ad5592r_dev *dev,
+//		     struct ad5592r_init_param *init_param)
+//{
+//	int32_t ret;
+//	uint16_t temp_reg_val;
+//
+//	if (!dev)
+//		return -1;
+//
+//	dev->ops = &ad5592r_rw_ops;
+//
+//	ret = ad5592r_software_reset(dev);
+//	if (ret < 0)
+//		return ret;
+//
+//	ret = ad5592r_set_channel_modes(dev);
+//	if (ret < 0)
+//		return ret;
+//
+//	if(init_param->int_ref) {
+//		ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
+//		if (ret < 0)
+//			return ret;
+//		temp_reg_val |= AD5592R_REG_PD_EN_REF;
+//
+//		return ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
+//	}
+//
+//	return ret;
+//}
+//
+
 int32_t ad5592r_init(struct ad5592r_dev *dev,
-		     struct ad5592r_init_param *init_param)
+                     struct ad5592r_init_param *init_param)
 {
-	int32_t ret;
-	uint16_t temp_reg_val;
+    int32_t ret;
+    uint16_t temp_reg_val;
 
-	if (!dev)
-		return -1;
+    // Alocarea memoriei pentru dispozitivul AD5592R
+    dev = (struct ad5592r_dev *)no_os_malloc(sizeof(*dev));
+    if (!dev)
+        return -1;
 
-	dev->ops = &ad5592r_rw_ops;
+    // Verificăm dacă nu folosim SPI standard și configurăm axi_clkgen
+    ret = axi_clkgen_init(&dev->clkgen, init_param->clkgen_init);
+    if (ret != 0) {
+        printf("error: %s: axi_clkgen_init() failed\n", init_param->clkgen_init->name);
+        goto error_dev;
+    }
 
-	ret = ad5592r_software_reset(dev);
-	if (ret < 0)
-		return ret;
+    ret = axi_clkgen_set_rate(dev->clkgen, init_param->axi_clkgen_rate);
+    if (ret != 0) {
+        printf("error: %s: axi_clkgen_set_rate() failed\n", init_param->clkgen_init->name);
+        goto error_clkgen;
+    }
+    printf("axi_clkgen_set_rate() set to %ld Hz successfully.\n", init_param->axi_clkgen_rate);
 
-	ret = ad5592r_set_channel_modes(dev);
-	if (ret < 0)
-		return ret;
+   // Inițializarea SPI engine pentru AD5592R
+       // ret = spi_engine_init(&dev->spi, init_param->spi_init);
+    ret = no_os_spi_init(&dev->spi, init_param->spi_init);
+        if (ret) {
+            no_os_free(dev);
+            printf("SPI Engine initialization failed!\n");
+            return ret;
+        } else {
+            printf("SPI Engine initialized successfully.\n");
+        }
 
-	if(init_param->int_ref) {
-		ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
-		if (ret < 0)
-			return ret;
-		temp_reg_val |= AD5592R_REG_PD_EN_REF;
+    	dev->offload_init_param = init_param->offload_init_param;
+    	dev->reg_access_speed = init_param->reg_access_speed;
+    	dev->reg_data_width = init_param->reg_data_width;
+    	dev->capture_data_width = init_param->capture_data_width;
 
-		return ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
-	}
 
-	return ret;
+    // Restul inițializărilor AD5592R
+    dev->ops = &ad5592r_rw_ops;
+
+    // Resetare software a dispozitivului AD5592R
+    ret = ad5592r_software_reset(dev);
+    if (ret < 0)
+        goto error_clkgen;
+
+    // Setăm modurile canalelor
+    ret = ad5592r_set_channel_modes(dev);
+    if (ret < 0)
+        goto error_clkgen;
+
+    // Dacă se utilizează referință internă, actualizăm registrul PD (Power Down)
+    if (init_param->int_ref) {
+        ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
+        if (ret < 0)
+            goto error_clkgen;
+
+        // Activăm referința internă
+        temp_reg_val |= AD5592R_REG_PD_EN_REF;
+
+        // Scriem valoarea în registrul PD
+        ret = ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
+        if (ret < 0)
+            goto error_clkgen;
+    }
+
+    // Dacă ajungem aici, inițializarea a avut succes
+    return 0;
+
+error_clkgen:
+#if !defined(USE_STANDARD_SPI)
+    axi_clkgen_remove(dev->clkgen);
+#endif
+error_dev:
+    no_os_free(dev);
+
+    return -1;
 }
+
+

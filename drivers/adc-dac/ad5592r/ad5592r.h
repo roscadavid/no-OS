@@ -41,6 +41,7 @@
 
 #include "stdint.h"
 #include "ad5592r-base.h"
+#include "spi_engine.h"
 
 #define AD5592R_GPIO_READBACK_EN	NO_OS_BIT(10)
 #define AD5592R_LDAC_READBACK_EN	NO_OS_BIT(6)

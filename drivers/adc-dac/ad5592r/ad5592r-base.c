@@ -38,7 +38,7 @@
 *******************************************************************************/
 #include "no_os_error.h"
 #include "ad5592r-base.h"
-
+#include "spi_engine.h"
 /**
  * Write register.
  *

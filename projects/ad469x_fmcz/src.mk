@@ -13,7 +13,9 @@ SRCS += $(PROJECT)/src/ad469x_fmcz.c
 SRCS += $(DRIVERS)/api/no_os_spi.c \
 	$(DRIVERS)/api/no_os_pwm.c \
 	$(DRIVERS)/api/no_os_gpio.c \
-	$(DRIVERS)/adc/ad469x/ad469x.c \
+	$(DRIVERS)/adc-dac/ad5592r/ad5592r.c \
+	$(DRIVERS)/adc-dac/ad5592r/ad5592r-base.c \
+	$(DRIVERS)/axi_core/axi_adc_core/axi_adc_core.c \
 	$(DRIVERS)/axi_core/axi_dmac/axi_dmac.c \
 	$(DRIVERS)/axi_core/clk_axi_clkgen/clk_axi_clkgen.c \
 	$(DRIVERS)/axi_core/axi_pwmgen/axi_pwm.c \
@@ -37,7 +39,9 @@ SRCS += $(PLATFORM_DRIVERS)/$(PLATFORM)_uart.c \
 	$(NO-OS)/util/no_os_list.c						
 endif
 INCS += $(PROJECT)/src/parameters.h
-INCS += $(DRIVERS)/adc/ad469x/ad469x.h \
+INCS += $(DRIVERS)/adc-dac/ad5592r/ad5592r.h \
+    $(DRIVERS)/adc-dac/ad5592r/ad5592r-base.h \
+	$(DRIVERS)/axi_core/axi_adc_core/axi_adc_core.h \
 	$(DRIVERS)/axi_core/axi_dmac/axi_dmac.h \
 	$(DRIVERS)/axi_core/clk_axi_clkgen/clk_axi_clkgen.h \
 	$(DRIVERS)/axi_core/axi_pwmgen/axi_pwm_extra.h \

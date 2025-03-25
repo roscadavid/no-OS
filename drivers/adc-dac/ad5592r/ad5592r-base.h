@@ -42,10 +42,11 @@
 #include "stdint.h"
 #include "no_os_delay.h"
 #include "no_os_spi.h"
-#include "no_os_i2c.h"
+//#include "no_os_i2c.h"
 #include "no_os_util.h"
 #include <stdbool.h>
-
+#include "spi_engine.h"
+#include "clk_axi_clkgen.h"
 #define CH_MODE_UNUSED			0
 #define CH_MODE_ADC			1
 #define CH_MODE_DAC			2
@@ -115,7 +116,30 @@ struct ad5592r_rw_ops {
 };
 
 struct ad5592r_init_param {
-	bool int_ref;
+		bool int_ref;
+	 // Adaugă acest membru pentru SPI
+	 struct no_os_spi_init_param *spi_init;
+	//adaug parametrii noi
+	 	/* SPI module offload init */
+	 struct spi_engine_offload_init_param *offload_init_param;
+	 	/* PWM generator init structure */
+	 struct no_os_pwm_init_param	*trigger_pwm_init;
+	 	/* Clock gen for hdl design init structure */
+	 struct axi_clkgen_init	*clkgen_init;
+	 	/* Clock generator rate */
+	 uint32_t		axi_clkgen_rate;
+	 /** RESET GPIO initialization structure. */
+	 struct no_os_gpio_init_param	*gpio_resetn;
+	 	/** CONVST GPIO initialization parameters */
+	 struct no_os_gpio_init_param *gpio_convst;
+	 	/** BUSY GPIO initialization parameters */
+	 struct no_os_gpio_init_param *gpio_busy;
+	 	/* Register access speed */
+	 uint32_t		reg_access_speed;
+	 	/* Register data width */
+	 uint8_t		reg_data_width;
+	 	/* Capture data width */
+	 uint8_t		capture_data_width;
 };
 
 struct ad5592r_dev {
@@ -132,6 +156,19 @@ struct ad5592r_dev {
 	uint8_t gpio_in;
 	uint8_t gpio_val;
 	uint8_t ldac_mode;
+	//Adaug parametrii noi
+	 	/* SPI descriptor */
+	/* Clock gen for hdl design structure */
+	struct axi_clkgen	*clkgen;
+		/* Trigger conversion PWM generator descriptor */
+	struct no_os_pwm_desc		*trigger_pwm_desc;
+		/* SPI module offload init */
+	struct spi_engine_offload_init_param *offload_init_param;
+	 		/* Register data width */
+	uint8_t		reg_data_width;
+	 		/* Capture data width */
+	uint8_t		capture_data_width;
+	uint32_t	reg_access_speed;
 };
 
 int32_t ad5592r_base_reg_write(struct ad5592r_dev *dev, uint8_t reg,
