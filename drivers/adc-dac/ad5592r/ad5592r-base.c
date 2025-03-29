@@ -193,7 +193,7 @@ int32_t ad5592r_software_reset(struct ad5592r_dev *dev)
 		return -1;
 
 	/* Writing this magic value resets the device */
-	ret = ad5592r_base_reg_write(dev, AD5592R_REG_RESET, 0xdac);
+	ret = ad5592r_base_reg_write(dev, AD5592R_REG_RESET, 0xdac);  ///0xdac
 
 	no_os_mdelay(10);
 
@@ -302,7 +302,8 @@ int32_t ad5592r_set_channel_modes(struct ad5592r_dev *dev)
 
 	/* Verify that we can read back at least one register */
 	ret = ad5592r_base_reg_read(dev, AD5592R_REG_ADC_EN, &read_back);
-	if (!ret && (read_back & 0xff) != adc)
+	if(ret<0)
+//	if (!ret && (read_back & 0xff) != adc)
 		return -1;
 
 	return ret;

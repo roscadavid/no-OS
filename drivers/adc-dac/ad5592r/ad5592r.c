@@ -145,10 +145,10 @@ int32_t ad5592r_read_adc(struct ad5592r_dev *dev, uint8_t chan,
 	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	dev->spi_msg = swab16((uint16_t)(AD5592R_REG_ADC_SEQ << 11) |
-			      NO_OS_BIT(chan));
+				      NO_OS_BIT(chan));
 
 	ret = no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
-				       sizeof(dev->spi_msg));
+					       sizeof(dev->spi_msg));
 	if (ret < 0)
 		return ret;
 	ret = spi_engine_set_transfer_width(dev->spi,
@@ -171,6 +171,11 @@ int32_t ad5592r_read_adc(struct ad5592r_dev *dev, uint8_t chan,
 		return ret;
 
 	*value = dev->spi_msg;
+//	printf("%d\n", *value);
+//		uint16_t temp_reg_val;
+//		ad5592r_reg_write(dev, 0x1, 0x02);
+//		ad5592r_reg_write(dev, 0x0, 0x00);
+//		ad5592r_reg_read(dev, 0x0, &temp_reg_val);
 
 	return 0;
 }
@@ -242,6 +247,7 @@ int32_t ad5592r_reg_write(struct ad5592r_dev *dev, uint8_t reg, uint16_t value)
 	int32_t ret;
 	if (!dev)
 		return -1;
+
 		ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
 		if (ret != 0)
 			return ret;
@@ -251,12 +257,14 @@ int32_t ad5592r_reg_write(struct ad5592r_dev *dev, uint8_t reg, uint16_t value)
 	dev->spi_msg = swab16((reg << 11) | value);
 	ret = no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
 						sizeof(dev->spi_msg));
+	
 	ret = spi_engine_set_transfer_width(dev->spi,
 						    dev->capture_data_width);
 		if (ret != 0)
 			return ret;
 
 		spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
+
 		return ret;
 
 }
@@ -349,44 +357,13 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
  * @param init_param - The initial parameters of the device.
  * @return 0 in case of success, negative error code otherwise
  */
-//int32_t ad5592r_init(struct ad5592r_dev *dev,
-//		     struct ad5592r_init_param *init_param)
-//{
-//	int32_t ret;
-//	uint16_t temp_reg_val;
-//
-//	if (!dev)
-//		return -1;
-//
-//	dev->ops = &ad5592r_rw_ops;
-//
-//	ret = ad5592r_software_reset(dev);
-//	if (ret < 0)
-//		return ret;
-//
-//	ret = ad5592r_set_channel_modes(dev);
-//	if (ret < 0)
-//		return ret;
-//
-//	if(init_param->int_ref) {
-//		ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
-//		if (ret < 0)
-//			return ret;
-//		temp_reg_val |= AD5592R_REG_PD_EN_REF;
-//
-//		return ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
-//	}
-//
-//	return ret;
-//}
-//
 
-int32_t ad5592r_init(struct ad5592r_dev *dev,
+int32_t ad5592r_init(struct ad5592r_dev **device,
                      struct ad5592r_init_param *init_param)
 {
-    int32_t ret;
+    struct ad5592r_dev *dev;
+	int32_t ret;
     uint16_t temp_reg_val;
-
     // Alocarea memoriei pentru dispozitivul AD5592R
     dev = (struct ad5592r_dev *)no_os_malloc(sizeof(*dev));
     if (!dev)
@@ -406,6 +383,7 @@ int32_t ad5592r_init(struct ad5592r_dev *dev,
     }
     printf("axi_clkgen_set_rate() set to %ld Hz successfully.\n", init_param->axi_clkgen_rate);
 
+
    // Inițializarea SPI engine pentru AD5592R
        // ret = spi_engine_init(&dev->spi, init_param->spi_init);
     ret = no_os_spi_init(&dev->spi, init_param->spi_init);
@@ -421,21 +399,27 @@ int32_t ad5592r_init(struct ad5592r_dev *dev,
     	dev->reg_access_speed = init_param->reg_access_speed;
     	dev->reg_data_width = init_param->reg_data_width;
     	dev->capture_data_width = init_param->capture_data_width;
-
-
-    // Restul inițializărilor AD5592R
-    dev->ops = &ad5592r_rw_ops;
-
+        // Restul inițializărilor AD5592R
+        dev->ops = &ad5592r_rw_ops;
     // Resetare software a dispozitivului AD5592R
     ret = ad5592r_software_reset(dev);
     if (ret < 0)
         goto error_clkgen;
 
     // Setăm modurile canalelor
-    ret = ad5592r_set_channel_modes(dev);
-    if (ret < 0)
-        goto error_clkgen;
 
+	dev->num_channels=8;
+	dev->channel_modes[0] = 1;
+	dev->channel_modes[1] = 1;
+	dev->channel_modes[2] = 1;
+	dev->channel_modes[3] = 1;
+	dev->channel_modes[4] = 1;
+	dev->channel_modes[5] = 1;
+	dev->channel_modes[6] = 1;
+	dev->channel_modes[7] = 1;
+	    ret = ad5592r_set_channel_modes(dev);
+	    if (ret < 0)
+	        goto error_clkgen;
     // Dacă se utilizează referință internă, actualizăm registrul PD (Power Down)
     if (init_param->int_ref) {
         ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
@@ -449,9 +433,12 @@ int32_t ad5592r_init(struct ad5592r_dev *dev,
         ret = ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
         if (ret < 0)
             goto error_clkgen;
-    }
 
-    // Dacă ajungem aici, inițializarea a avut succes
+
+    }
+    *device = dev;
+
+     //Dacă ajungem aici, inițializarea a avut succes
     return 0;
 
 error_clkgen:
@@ -463,5 +450,3 @@ error_dev:
 
     return -1;
 }
-
-
