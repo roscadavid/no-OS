@@ -66,3 +66,6 @@
 #define MAX_SIZE_BASE_ADDR		0x100000 //1MB
 
 #endif /* __PARAMETERS_H__ */
+
+
+

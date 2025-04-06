@@ -44,6 +44,7 @@
 #include "no_os_error.h"
 #include "no_os_util.h"
 #include "no_os_alloc.h"
+#include "no_os_pwm.h"
 
 
 const struct ad5592r_rw_ops ad5592r_rw_ops = {
@@ -242,31 +243,31 @@ int32_t ad5592r_multi_read_adc(struct ad5592r_dev *dev, uint16_t chans,
  * @param value - register value
  * @return 0 in case of success, negative error code otherwise
  */
+
 int32_t ad5592r_reg_write(struct ad5592r_dev *dev, uint8_t reg, uint16_t value)
 {
 	int32_t ret;
+
 	if (!dev)
 		return -1;
 
-		ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
-		if (ret != 0)
-			return ret;
+	ret = spi_engine_set_transfer_width(dev->spi, dev->reg_data_width);
+	if (ret != 0)
+		return ret;
 
-		spi_engine_set_speed(dev->spi, dev->reg_access_speed);
+	spi_engine_set_speed(dev->spi, dev->reg_access_speed);
 
 	dev->spi_msg = swab16((reg << 11) | value);
 	ret = no_os_spi_write_and_read(dev->spi, (uint8_t *)&dev->spi_msg,
-						sizeof(dev->spi_msg));
-	
-	ret = spi_engine_set_transfer_width(dev->spi,
-						    dev->capture_data_width);
-		if (ret != 0)
-			return ret;
+					sizeof(dev->spi_msg));
 
-		spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
-
+	ret = spi_engine_set_transfer_width(dev->spi, dev->capture_data_width);
+	if (ret != 0)
 		return ret;
 
+	spi_engine_set_speed(dev->spi, dev->spi->max_speed_hz);
+
+	return ret;
 }
 
 /**
@@ -349,6 +350,145 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
 	return 0;
 }
 
+//int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
+//			 uint8_t chan,
+//			 uint32_t *buf,
+//			 uint16_t samples)
+//{
+//	int32_t ret;
+//
+//	uint32_t commands_data[3] = {0x1002, 0x0000,0x0000};
+//	struct spi_engine_offload_message msg;
+//	uint32_t spi_eng_msg_cmds[9] = {
+//			CS_LOW,
+//			WRITE(2),
+//			CS_HIGH,
+//			CS_LOW,
+//			WRITE(2),
+//		    CS_HIGH,
+//			CS_LOW,
+//		    WRITE_READ(2),
+//			CS_HIGH
+//	};
+//	no_os_pwm_enable(dev->trigger_pwm_desc);
+//
+//	ret = spi_engine_offload_init(dev->spi, dev->offload_init_param);
+//	if (ret != 0)
+//		return ret;
+//
+//	msg.commands = spi_eng_msg_cmds;
+//	msg.no_commands = NO_OS_ARRAY_SIZE(spi_eng_msg_cmds);
+//	msg.rx_addr = (uint32_t)buf;
+//	msg.commands_data = commands_data;
+//
+//	ret = spi_engine_offload_transfer(dev->spi, msg, samples);
+//	if (ret != 0)
+//		return ret;
+//
+//	return ret;
+//}
+
+//int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
+//				  uint8_t chan,
+//				  uint32_t *buf,
+//				  uint16_t samples)
+//{
+//	int32_t ret;
+//	uint16_t adc_seq_value;
+//	uint32_t commands_data[3];
+//	struct spi_engine_offload_message msg;
+//
+//	// Comenzi SPI Engine pentru scrierea secvenței ADC și citirea valorii
+//	uint32_t spi_eng_msg_cmds[9] = {
+//		CS_LOW,
+//		WRITE(2),   // scriem ADC_SEQ
+//		CS_HIGH,
+//		CS_LOW,
+//		WRITE(2),   // dummy write pentru trigger?
+//		CS_HIGH,
+//		CS_LOW,
+//		WRITE_READ(2),  // citire ADC
+//		CS_HIGH
+//	};
+//
+//	if (!dev || !buf || chan > 7)
+//		return -EINVAL;
+//
+//	// Calculăm valoarea pentru registrul ADC_SEQ
+//	// Bitii [7:0] corespund canalelor 0-7
+//	adc_seq_value = (1 << chan);
+//
+//	commands_data[0] = (AD5592R_REG_ADC_SEQ << 11) | adc_seq_value; // Scriem în ADC_SEQ
+//	commands_data[1] = 0x0000; // Dummy write, poate fi personalizat
+//	commands_data[2] = 0x0000; // Dummy read (va fi umplut cu date)
+//
+//	no_os_pwm_enable(dev->trigger_pwm_desc);
+//
+//	ret = spi_engine_offload_init(dev->spi, dev->offload_init_param);
+//	if (ret != 0)
+//		return ret;
+//
+//	msg.commands = spi_eng_msg_cmds;
+//	msg.no_commands = NO_OS_ARRAY_SIZE(spi_eng_msg_cmds);
+//	msg.rx_addr = (uint32_t)buf;
+//	msg.commands_data = commands_data;
+//
+//	ret = spi_engine_offload_transfer(dev->spi, msg, samples);
+//	if (ret != 0)
+//		return ret;
+//
+//	return ret;
+//}
+
+int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
+			 uint8_t chan,
+			 uint32_t *buf,
+			 uint16_t samples)
+{
+	int32_t ret;
+
+	if (!dev || !buf || chan >= dev->num_channels)
+		return -1;
+
+	uint32_t adc_seq_cmd = ((AD5592R_REG_ADC_SEQ << 11) | NO_OS_BIT(chan));
+	uint32_t commands_data[3] = {
+		adc_seq_cmd, // selectează canalul dorit
+		0x0000,      // nop
+		0x0000       // nop
+	};
+
+	struct spi_engine_offload_message msg;
+	uint32_t spi_eng_msg_cmds[9] = {
+			CS_LOW,
+			WRITE(2),
+			CS_HIGH,
+			CS_LOW,
+			WRITE(2),
+		    CS_HIGH,
+			CS_LOW,
+		    WRITE_READ(2),
+			CS_HIGH
+	};
+
+	// Pornește trigger-ul
+	no_os_pwm_enable(dev->trigger_pwm_desc);
+
+	// Inițializează offload-ul
+	ret = spi_engine_offload_init(dev->spi, dev->offload_init_param);
+	if (ret != 0)
+		return ret;
+
+	msg.commands = spi_eng_msg_cmds;
+	msg.no_commands = NO_OS_ARRAY_SIZE(spi_eng_msg_cmds);
+	msg.rx_addr = (uint32_t)buf;
+	msg.commands_data = commands_data;
+
+	ret = spi_engine_offload_transfer(dev->spi, msg, samples);
+	if (ret != 0)
+		return ret;
+
+	return 0;
+}
 
 /**
  * Initialize AD5593r device.
@@ -364,6 +504,7 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
     struct ad5592r_dev *dev;
 	int32_t ret;
     uint16_t temp_reg_val;
+
     // Alocarea memoriei pentru dispozitivul AD5592R
     dev = (struct ad5592r_dev *)no_os_malloc(sizeof(*dev));
     if (!dev)
@@ -376,7 +517,7 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
         goto error_dev;
     }
 
-    ret = axi_clkgen_set_rate(dev->clkgen, init_param->axi_clkgen_rate);
+    ret = axi_clkgen_set_rate(dev->clkgen, init_param->axi_clkgen_rate);  //axi_clkgen_rate daca avem 20M max ar trebui sa avem 40M
     if (ret != 0) {
         printf("error: %s: axi_clkgen_set_rate() failed\n", init_param->clkgen_init->name);
         goto error_clkgen;
@@ -387,18 +528,29 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
    // Inițializarea SPI engine pentru AD5592R
        // ret = spi_engine_init(&dev->spi, init_param->spi_init);
     ret = no_os_spi_init(&dev->spi, init_param->spi_init);
-        if (ret) {
+        if (ret < 0) {
             no_os_free(dev);
             printf("SPI Engine initialization failed!\n");
             return ret;
         } else {
             printf("SPI Engine initialized successfully.\n");
         }
+        // Inițializarea SPI Engine offload (folosind parametrii din init_param)
+    ret = spi_engine_offload_init(dev->spi, init_param->offload_init_param);
+        if (ret < 0) {
+                    printf("SPI Engine Offload initialization failed!\n");
+                    no_os_free(dev);
+                    return ret;
+                } else{
+                printf("SPI Engine Offload initialized successfully.\n");
+                }
 
+        // Continuăm cu restul inițializărilor AD5592R
     	dev->offload_init_param = init_param->offload_init_param;
     	dev->reg_access_speed = init_param->reg_access_speed;
     	dev->reg_data_width = init_param->reg_data_width;
     	dev->capture_data_width = init_param->capture_data_width;
+
         // Restul inițializărilor AD5592R
         dev->ops = &ad5592r_rw_ops;
     // Resetare software a dispozitivului AD5592R
@@ -417,6 +569,7 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
 	dev->channel_modes[5] = 1;
 	dev->channel_modes[6] = 1;
 	dev->channel_modes[7] = 1;
+
 	    ret = ad5592r_set_channel_modes(dev);
 	    if (ret < 0)
 	        goto error_clkgen;
@@ -434,13 +587,18 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
         if (ret < 0)
             goto error_clkgen;
 
+    	ret = no_os_pwm_init(&dev->trigger_pwm_desc, init_param->trigger_pwm_init);
+    	if (ret != 0)
+    		goto error_spi;
+
 
     }
     *device = dev;
 
      //Dacă ajungem aici, inițializarea a avut succes
     return 0;
-
+error_spi:
+       no_os_spi_remove(dev->spi);
 error_clkgen:
 #if !defined(USE_STANDARD_SPI)
     axi_clkgen_remove(dev->clkgen);
@@ -450,3 +608,4 @@ error_dev:
 
     return -1;
 }
+

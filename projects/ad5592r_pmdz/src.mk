@@ -9,7 +9,7 @@
 #									       #
 ################################################################################
 
-SRCS += $(PROJECT)/src/ad5592r_fmcz.c
+SRCS += $(PROJECT)/src/ad5592r_pmdz.c
 SRCS += $(DRIVERS)/api/no_os_spi.c \
 	$(DRIVERS)/api/no_os_pwm.c \
 	$(DRIVERS)/api/no_os_gpio.c \

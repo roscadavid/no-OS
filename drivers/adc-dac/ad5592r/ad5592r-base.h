@@ -42,7 +42,7 @@
 #include "stdint.h"
 #include "no_os_delay.h"
 #include "no_os_spi.h"
-//#include "no_os_i2c.h"
+
 #include "no_os_util.h"
 #include <stdbool.h>
 #include "spi_engine.h"
@@ -123,7 +123,7 @@ struct ad5592r_init_param {
 	 	/* SPI module offload init */
 	 struct spi_engine_offload_init_param *offload_init_param;
 	 	/* PWM generator init structure */
-	 struct no_os_pwm_init_param	*trigger_pwm_init;
+	 struct no_os_pwm_init_param	*trigger_pwm_init;   //Semnalul PWM
 	 	/* Clock gen for hdl design init structure */
 	 struct axi_clkgen_init	*clkgen_init;
 	 	/* Clock generator rate */
@@ -140,6 +140,7 @@ struct ad5592r_init_param {
 	 uint8_t		reg_data_width;
 	 	/* Capture data width */
 	 uint8_t		capture_data_width;
+
 };
 
 struct ad5592r_dev {
@@ -161,7 +162,7 @@ struct ad5592r_dev {
 	/* Clock gen for hdl design structure */
 	struct axi_clkgen	*clkgen;
 		/* Trigger conversion PWM generator descriptor */
-	struct no_os_pwm_desc		*trigger_pwm_desc;
+	struct no_os_pwm_desc		*trigger_pwm_desc;    // Semnalul PWM
 		/* SPI module offload init */
 	struct spi_engine_offload_init_param *offload_init_param;
 	 		/* Register data width */
