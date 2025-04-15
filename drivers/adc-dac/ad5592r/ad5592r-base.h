@@ -140,6 +140,8 @@ struct ad5592r_init_param {
 	 uint8_t		reg_data_width;
 	 	/* Capture data width */
 	 uint8_t		capture_data_width;
+	 void (*dcache_invalidate_range)(uint32_t address, uint32_t bytes_count);
+
 
 };
 
@@ -170,6 +172,8 @@ struct ad5592r_dev {
 	 		/* Capture data width */
 	uint8_t		capture_data_width;
 	uint32_t	reg_access_speed;
+	/** Invalidate the Data cache for the given address range */
+	void (*dcache_invalidate_range)(uint32_t address, uint32_t bytes_count);
 };
 
 int32_t ad5592r_base_reg_write(struct ad5592r_dev *dev, uint8_t reg,

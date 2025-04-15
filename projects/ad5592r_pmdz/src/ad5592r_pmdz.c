@@ -65,7 +65,7 @@
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
-//#define AD469x_EVB_SAMPLE_NO		1000
+//#define AD5592R_EVB_SAMPLE_NO		1000
 //#define TOTAL_CH					3
 
 #define SPI_DEVICE_ID				0
@@ -86,13 +86,18 @@ int main(void)
 	printf("\n\n!!!\tStarting...\t!!!\n\n");
 	//uint16_t value, value1, value2, value3, value4, value5;
 	int ret;
-	//uint32_t buf[6];
-	uint32_t buf0[1024];
-	uint32_t buf1[1024];
-	uint32_t buf2[1024];
-	uint32_t buf3[1024];
-	uint32_t buf4[1024];
-	uint32_t buf5[1024];
+	uint32_t *buf = ADC_DDR_BASEADDR;
+	uint16_t samples_0[6][3200];
+	uint16_t samples_1[6][3200];
+//	uint32_t 		*data;
+//	uint32_t* buf = malloc(1024 * sizeof(uint32_t));
+//	uint32_t buf[6];
+//	uint32_t buf0[1024];
+//	uint32_t buf1[1024];
+//	uint32_t buf2[1024];
+//	uint32_t buf3[1024];
+//	uint32_t buf4[1024];
+//	uint32_t buf5[1024];
 
     // Definirea parametrilor pentru SPI Engine
     struct spi_engine_offload_init_param spi_engine_offload_init_param = {
@@ -119,7 +124,7 @@ int main(void)
     			.channel = 0,
     		};
 	struct no_os_pwm_init_param trigger_pwm_init = {
-		.period_ns = 1000,//1000	/* 1Mhz */ //f=400KSP
+		.period_ns = 5000,//1000	/* 1Mhz */ //f=400KSP
 		.duty_cycle_ns = 10,
 		.polarity = NO_OS_PWM_POLARITY_HIGH,
 		.platform_ops = &axi_pwm_ops,
@@ -130,7 +135,7 @@ int main(void)
             .max_speed_hz = 20000000,    //Sclk max din dataSheet in loc de 80Mz vom pune 20Mz
             .mode = NO_OS_SPI_MODE_3,
             .platform_ops = &spi_eng_platform_ops,
-            .extra = &spi_eng_init_param,
+			.extra = (void*)&spi_eng_init_param,
         };
 
 	struct ad5592r_dev *my_ad5592;
@@ -145,65 +150,99 @@ int main(void)
 			.reg_data_width = 8,
 			.capture_data_width = 16,  //posibil 12, dar nu sigur
 			.int_ref = true,
+			.dcache_invalidate_range = (void (*)(uint32_t, uint32_t))Xil_DCacheInvalidateRange,
 
 	    };
+
+	Xil_ICacheEnable();
+	Xil_DCacheEnable();
 
 	ret = ad5592r_init(&my_ad5592, &default_init_param);
 	if (ret < 0) {
 		printf("Couldn't initialize ad5592r driver with SPI engine!\n");
 		return ret;
 	}
+
 	printf("SUCCES!\n");
 
-	for(int i = 0 ; i < 1; i++ ){
-		// Citește câte 1024 samples de pe fiecare canal (0–5)
-		ret = ad5592r_read_data_offload(my_ad5592, 0, buf0, 1024);
+	//momentan alocate static
+		memset(buf, 0, 3200 * sizeof(uint32_t));
+			// Citește câte 1024 samples de pe fiecare canal (0–5)
+		ret = ad5592r_read_data_spi_engine_offload(my_ad5592, 0, buf, 3200);
 		if (ret < 0) {
 			printf("Error reading ADC data from channel 0!\n");
 			return ret;
 		}
+		for ( int i = 0; i < 3200 ; i++){
+				samples_0[0][i] = buf [i] & 0xFFF;
+				samples_1[0][i] = (buf[i]>>16) & 0xFFF;
 
-		ret = ad5592r_read_data_offload(my_ad5592, 1, buf1, 1024);
+			}
+		memset(buf, 0, 3200 * sizeof(uint32_t));
+			// Citește câte 1024 samples de pe fiecare canal (0–5)
+		ret = ad5592r_read_data_spi_engine_offload(my_ad5592, 1, buf, 3200);
 		if (ret < 0) {
 			printf("Error reading ADC data from channel 1!\n");
 			return ret;
 		}
+		for ( int i = 0; i < 3200 ; i++){
+				samples_0[1][i] = buf [i] & 0xFFF;
+				samples_1[1][i] = (buf[i]>>16) & 0xFFF;
 
-		ret = ad5592r_read_data_offload(my_ad5592, 2, buf2, 1024);
+			}
+		memset(buf, 0, 3200 * sizeof(uint32_t));
+			// Citește câte 1024 samples de pe fiecare canal (0–5)
+		ret = ad5592r_read_data_spi_engine_offload(my_ad5592, 2, buf, 3200);
 		if (ret < 0) {
 			printf("Error reading ADC data from channel 2!\n");
 			return ret;
 		}
+		for ( int i = 0; i < 3200 ; i++){
+				samples_0[2][i] = buf [i] & 0xFFF;
+				samples_1[2][i] = (buf[i]>>16) & 0xFFF;
 
-		ret = ad5592r_read_data_offload(my_ad5592, 3, buf3, 4096);
+			}
+		memset(buf, 0, 3200 * sizeof(uint32_t));
+			// Citește câte 1024 samples de pe fiecare canal (0–5)
+		ret = ad5592r_read_data_spi_engine_offload(my_ad5592, 3, buf, 3200);
 		if (ret < 0) {
 			printf("Error reading ADC data from channel 3!\n");
 			return ret;
 		}
+		for ( int i = 0; i < 3200 ; i++){
+				samples_0[3][i] = buf [i] & 0xFFF;
+				samples_1[3][i] = (buf[i]>>16) & 0xFFF;
 
-		ret = ad5592r_read_data_offload(my_ad5592, 4, buf4, 1024);
+			}
+		memset(buf, 0, 3200 * sizeof(uint32_t));
+			// Citește câte 1024 samples de pe fiecare canal (0–5)
+		ret = ad5592r_read_data_spi_engine_offload(my_ad5592, 4, buf, 3200);
 		if (ret < 0) {
 			printf("Error reading ADC data from channel 4!\n");
 			return ret;
 		}
+		for ( int i = 0; i < 3200 ; i++){
+				samples_0[4][i] = buf [i] & 0xFFF;
+				samples_1[4][i] = (buf[i]>>16) & 0xFFF;
 
-		ret = ad5592r_read_data_offload(my_ad5592, 5, buf5, 1024);
+			}
+		memset(buf, 0, 3200 * sizeof(uint32_t));
+			// Citește câte 1024 samples de pe fiecare canal (0–5)
+		ret = ad5592r_read_data_spi_engine_offload(my_ad5592, 5, buf, 3200);
 		if (ret < 0) {
 			printf("Error reading ADC data from channel 5!\n");
 			return ret;
 		}
+		for ( int i = 0; i < 3200 ; i++){
+				samples_0[5][i] = buf [i] & 0xFFF;
+				samples_1[5][i] = (buf[i]>>16) & 0xFFF;
+			}
 
-		// Afișează eșantioanele citite, mascate la 12 biți
-		for (int sample=0; sample < 1024; sample++) {
-			printf("ADC samples: %d, %d, %d, %d, %d, %d\n",
-				buf0[sample] & 0x00000FFF,
-				buf1[sample] & 0x00000FFF,
-				buf2[sample] & 0x00000FFF,
-				buf3[sample] & 0x00000FFF,
-				buf4[sample] & 0x00000FFF,
-				buf5[sample] & 0x00000FFF);
-		}
-	}
+		for ( int i = 0; i < 3200 ; i++){
+			    printf("ADC0 sample: %d, %d, %d, %d, %d, %d \n", samples_0[0][i], samples_0[1][i], samples_0[2][i], samples_0[3][i], samples_0[4][i], samples_0[5][i] );
+			    printf("ADC1 sample: %d, %d, %d, %d, %d, %d \n", samples_1[0][i], samples_1[1][i], samples_1[2][i], samples_1[3][i], samples_1[4][i], samples_1[5][i] );
+			}
+
 //	for (int i = 0; i < 5; i++)
 //	{
 //		ad5592r_read_adc(my_ad5592, 0, &value);
@@ -216,12 +255,10 @@ int main(void)
 //		printf("ADC sample:  %d,%d,%d,%d,%d,%d\n ", value & 0x0fff, value1 & 0x0fff, value2 & 0x0fff, value3 & 0x0fff, value4 & 0x0fff, value5 & 0x0fff);
 //	}
 
-
 	printf("\n\n!!!\tEnd...\t!!!\n\n");
 
 	return 0;
 }
-
 
 
 

@@ -1,8 +1,14 @@
-Sun Apr  6 12:22:21 2025: Server was asked to start on port: '35187'
-Sun Apr  6 12:22:21 2025: Server is using token UUID: '4dc262a7-1b55-447f-8a4e-44e602f3e5a9'
-Sun Apr  6 12:22:21 2025: Attempting to start server on port '35187'
-Sun Apr  6 12:22:21 2025: XRC main fifo: created main fifo '/tmp/xrcmain4dc262a7-1b55-447f-8a4e-44e602f3e5a9', fd read = 11
-Sun Apr  6 12:22:21 2025: Running Rule Check Server
-Sun Apr  6 12:22:21 2025: Version 1.6.1
-Sun Apr  6 12:22:22 2025: Rule Check Server: Accepted socket connection from client
-Sun Apr  6 12:22:22 2025: EXCHANGE_TOKEN received, server token: 4dc262a7-1b55-447f-8a4e-44e602f3e5a9, passed token: 4dc262a7-1b55-447f-8a4e-44e602f3e5a9
+Tue Apr 15 16:00:26 2025: Server was asked to start on port: '41243'
+Tue Apr 15 16:00:26 2025: Server is using token UUID: '14e85d31-7121-498c-b65c-b9a619fd241b'
+Tue Apr 15 16:00:26 2025: Attempting to start server on port '41243'
+Tue Apr 15 16:00:26 2025: XRC main fifo: created main fifo '/tmp/xrcmain14e85d31-7121-498c-b65c-b9a619fd241b', fd read = 11
+Tue Apr 15 16:00:26 2025: Running Rule Check Server
+Tue Apr 15 16:00:26 2025: Version 1.6.1
+Tue Apr 15 16:00:27 2025: Rule Check Server: Accepted socket connection from client
+Tue Apr 15 16:00:27 2025: EXCHANGE_TOKEN received, server token: 14e85d31-7121-498c-b65c-b9a619fd241b, passed token: 14e85d31-7121-498c-b65c-b9a619fd241b
+Tue Apr 15 23:59:14 2025: STOP_SERVER received, server token: 14e85d31-7121-498c-b65c-b9a619fd241b, passed token: 14e85d31-7121-498c-b65c-b9a619fd241b
+Tue Apr 15 23:59:14 2025: Socket received request to stop server.
+Tue Apr 15 23:59:14 2025: SERVER: destructor for server bound to port 41243
+Tue Apr 15 23:59:14 2025: XRC main fifo: Good unlink of /tmp/xrcmain14e85d31-7121-498c-b65c-b9a619fd241b
+Tue Apr 15 23:59:14 2025: Server exiting with status 0.
+Tue Apr 15 23:59:14 2025: Closing log file.

@@ -62,6 +62,8 @@
 #define UART_BAUDRATE                   115200
 #define INTC_DEVICE_ID			XPAR_SCUGIC_SINGLE_DEVICE_ID
 #define ADC_DDR_BASEADDR		XPAR_DDR_MEM_BASEADDR + 0x800000
+
+
 /* Maximum data to be read or write in a capture over iio */
 #define MAX_SIZE_BASE_ADDR		0x100000 //1MB
 

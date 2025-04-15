@@ -46,7 +46,7 @@
 #include "no_os_alloc.h"
 #include "no_os_pwm.h"
 
-
+#include "xil_cache.h"
 const struct ad5592r_rw_ops ad5592r_rw_ops = {
 	.write_dac = ad5592r_write_dac,
 	.read_adc = ad5592r_read_adc,
@@ -440,7 +440,7 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
 //	return ret;
 //}
 
-int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
+int32_t ad5592r_read_data_spi_engine_offload(struct ad5592r_dev *dev,
 			 uint8_t chan,
 			 uint32_t *buf,
 			 uint16_t samples)
@@ -458,13 +458,15 @@ int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
 	};
 
 	struct spi_engine_offload_message msg;
-	uint32_t spi_eng_msg_cmds[9] = {
+	uint32_t spi_eng_msg_cmds[11] = {
 			CS_LOW,
 			WRITE(2),
 			CS_HIGH,
+			SLEEP(20),
 			CS_LOW,
 			WRITE(2),
 		    CS_HIGH,
+			SLEEP(20),
 			CS_LOW,
 		    WRITE_READ(2),
 			CS_HIGH
@@ -487,8 +489,14 @@ int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
 	if (ret != 0)
 		return ret;
 
+	no_os_mdelay(1000);
+
+	if (dev->dcache_invalidate_range)
+		dev->dcache_invalidate_range(msg.rx_addr, samples * sizeof(uint32_t));
+
 	return 0;
 }
+
 
 /**
  * Initialize AD5593r device.
@@ -550,14 +558,15 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
     	dev->reg_access_speed = init_param->reg_access_speed;
     	dev->reg_data_width = init_param->reg_data_width;
     	dev->capture_data_width = init_param->capture_data_width;
-
+    	dev->dcache_invalidate_range = init_param->dcache_invalidate_range;
         // Restul inițializărilor AD5592R
         dev->ops = &ad5592r_rw_ops;
     // Resetare software a dispozitivului AD5592R
     ret = ad5592r_software_reset(dev);
     if (ret < 0)
-        goto error_clkgen;
+    	goto error_clkgen;
 
+	no_os_mdelay(1000);
     // Setăm modurile canalelor
 
 	dev->num_channels=8;
@@ -573,6 +582,7 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
 	    ret = ad5592r_set_channel_modes(dev);
 	    if (ret < 0)
 	        goto error_clkgen;
+	no_os_mdelay(1000);
     // Dacă se utilizează referință internă, actualizăm registrul PD (Power Down)
     if (init_param->int_ref) {
         ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
@@ -581,7 +591,7 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
 
         // Activăm referința internă
         temp_reg_val |= AD5592R_REG_PD_EN_REF;
-
+    no_os_mdelay(1000);
         // Scriem valoarea în registrul PD
         ret = ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
         if (ret < 0)
@@ -594,7 +604,7 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
 
     }
     *device = dev;
-
+    no_os_mdelay(1000);
      //Dacă ajungem aici, inițializarea a avut succes
     return 0;
 error_spi:
