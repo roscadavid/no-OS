@@ -61,7 +61,6 @@
 #include "ad5592r-base.h"
 #include "axi_adc_core.h"
 
-
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
 /******************************************************************************/
@@ -71,12 +70,12 @@
 #define SPI_DEVICE_ID				0
 
 
-//#define AXI_ADC_DATA_CHANNEL_0		0x0042C
-//#define AXI_ADC_DATA_CHANNEL_1		0x0046C
-//#define AXI_ADC_DATA_CHANNEL_2		0x004AC
-//#define AXI_ADC_DATA_CHANNEL_3		0x004EC
-//#define AXI_ADC_DATA_CHANNEL_4		0x0052C
-//#define AXI_ADC_DATA_CHANNEL_5		0x0056C
+#define AXI_ADC_DATA_CHANNEL_0		0x0042C
+#define AXI_ADC_DATA_CHANNEL_1		0x0046C
+#define AXI_ADC_DATA_CHANNEL_2		0x004AC
+#define AXI_ADC_DATA_CHANNEL_3		0x004EC
+#define AXI_ADC_DATA_CHANNEL_4		0x0052C
+#define AXI_ADC_DATA_CHANNEL_5		0x0056C
 
 
 #define RX_CORE_BASEADDR            0x44a00000
@@ -84,26 +83,16 @@
 int main(void)
 {
 	printf("\n\n!!!\tStarting...\t!!!\n\n");
-	//uint16_t value, value1, value2, value3, value4, value5;
+//	uint16_t value, value1, value2, value3, value4, value5;
+//	uint16_t value;
 	int ret;
 	uint32_t *buf = ADC_DDR_BASEADDR;
 	uint16_t samples_0[6][3200];
 	uint16_t samples_1[6][3200];
-//	uint32_t 		*data;
-//	uint32_t* buf = malloc(1024 * sizeof(uint32_t));
-//	uint32_t buf[6];
-//	uint32_t buf0[1024];
-//	uint32_t buf1[1024];
-//	uint32_t buf2[1024];
-//	uint32_t buf3[1024];
-//	uint32_t buf4[1024];
-//	uint32_t buf5[1024];
-
     // Definirea parametrilor pentru SPI Engine
     struct spi_engine_offload_init_param spi_engine_offload_init_param = {
         .offload_config = OFFLOAD_RX_EN,
         .rx_dma_baseaddr = AD5592R_DMA_BASEADDR,
-
     };
 
     struct spi_engine_init_param spi_eng_init_param = {
@@ -162,6 +151,19 @@ int main(void)
 		printf("Couldn't initialize ad5592r driver with SPI engine!\n");
 		return ret;
 	}
+
+	struct axi_adc_init axi_pwm_custom_param = {
+				.name = "axi_pwm_custom_core",
+				.num_channels = 6,
+				.base = RX_CORE_BASEADDR
+			};
+			struct axi_adc_init *axi_pwm_custom_core;
+
+			ret = axi_adc_init(&axi_pwm_custom_core,  &axi_pwm_custom_param);
+			if (ret) {
+				printf("axi_adc_init() error: %s\n", axi_pwm_custom_core->name);
+				return ret;
+			}
 
 	printf("SUCCES!\n");
 
@@ -239,11 +241,27 @@ int main(void)
 			}
 
 		for ( int i = 0; i < 3200 ; i++){
-			    printf("ADC0 sample: %d, %d, %d, %d, %d, %d \n", samples_0[0][i], samples_0[1][i], samples_0[2][i], samples_0[3][i], samples_0[4][i], samples_0[5][i] );
-			    printf("ADC1 sample: %d, %d, %d, %d, %d, %d \n", samples_1[0][i], samples_1[1][i], samples_1[2][i], samples_1[3][i], samples_1[4][i], samples_1[5][i] );
-			}
 
-//	for (int i = 0; i < 5; i++)
+			for ( int i = 0; i < 3200 ; i++){
+			printf("ADC0 sample: %d, %d, %d, %d, %d, %d \n", samples_0[0][i], samples_0[1][i], samples_0[2][i], samples_0[3][i], samples_0[4][i], samples_0[5][i] );
+			axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_0, samples_0[0][i]  & 0x0fff);
+			axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_1, samples_0[1][i]  & 0x0fff);
+			axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_2, samples_0[2][i]  & 0x0fff);
+			axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_3, samples_0[3][i]  & 0x0fff);
+			axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_4, samples_0[4][i]  & 0x0fff);
+			axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_5, samples_0[5][i]  & 0x0fff);
+
+		    printf("ADC1 sample: %d, %d, %d, %d, %d, %d \n", samples_1[0][i], samples_1[1][i], samples_1[2][i], samples_1[3][i], samples_1[4][i], samples_1[5][i] );
+		    axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_0, samples_0[0][i]  & 0x0fff);
+		    axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_1, samples_0[1][i]  & 0x0fff);
+		    axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_2, samples_0[2][i]  & 0x0fff);
+		    axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_3, samples_0[3][i]  & 0x0fff);
+		    axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_4, samples_0[4][i]  & 0x0fff);
+		    axi_adc_write(axi_pwm_custom_core, AXI_ADC_DATA_CHANNEL_5, samples_0[5][i]  & 0x0fff);
+						}
+				}
+
+//	for (int i = 0; i < 3200; i++)
 //	{
 //		ad5592r_read_adc(my_ad5592, 0, &value);
 //		ad5592r_read_adc(my_ad5592, 1, &value1);
@@ -251,7 +269,8 @@ int main(void)
 //		ad5592r_read_adc(my_ad5592, 3, &value3);
 //		ad5592r_read_adc(my_ad5592, 4, &value4);
 //		ad5592r_read_adc(my_ad5592, 5, &value5);
-//
+//		printf("ADC Sample: %d\n", value & 0x0fff);
+
 //		printf("ADC sample:  %d,%d,%d,%d,%d,%d\n ", value & 0x0fff, value1 & 0x0fff, value2 & 0x0fff, value3 & 0x0fff, value4 & 0x0fff, value5 & 0x0fff);
 //	}
 
@@ -259,7 +278,6 @@ int main(void)
 
 	return 0;
 }
-
 
 
 

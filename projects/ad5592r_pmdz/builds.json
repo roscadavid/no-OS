@@ -2,19 +2,20 @@
       "xilinx": {
         "uart_print": {
               "flags" : "",
-              "hardware" : ["ad469x_fmc_zed"]
+              "hardware" : ["ad5592r_pmdz"]
         },
         "iio": {
               "flags" : "TINYIIOD=y",
-              "hardware" : ["ad469x_fmc_zed"]
+              "hardware" : ["ad5592r_pmdz"]
         },
         "standard_seq": {
               "flags" : "NEW_CFLAGS=-DSTANDARD_SEQ",
-              "hardware" : ["ad469x_fmc_zed"]
+              "hardware" : ["ad5592r_pmdz"]
         },
         "advance_seq": {
               "flags" : "NEW_CFLAGS=-DADVANCED_SEQ",
-              "hardware" : ["ad469x_fmc_zed"]
+              "hardware" : ["ad5592r_pmdz"]
         }
       }
 }
+

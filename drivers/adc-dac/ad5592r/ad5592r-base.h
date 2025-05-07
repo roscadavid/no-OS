@@ -42,7 +42,7 @@
 #include "stdint.h"
 #include "no_os_delay.h"
 #include "no_os_spi.h"
-
+#include "no_os_i2c.h"
 #include "no_os_util.h"
 #include <stdbool.h>
 #include "spi_engine.h"

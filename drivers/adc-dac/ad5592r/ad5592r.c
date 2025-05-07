@@ -41,12 +41,12 @@
 #include "ad5592r.h"
 #include "spi_engine.h"
 #include "no_os_delay.h"
-#include "no_os_error.h"
 #include "no_os_util.h"
 #include "no_os_alloc.h"
 #include "no_os_pwm.h"
-
+#include "clk_axi_clkgen.h"
 #include "xil_cache.h"
+
 const struct ad5592r_rw_ops ad5592r_rw_ops = {
 	.write_dac = ad5592r_write_dac,
 	.read_adc = ad5592r_read_adc,
@@ -349,96 +349,6 @@ int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value)
 
 	return 0;
 }
-
-//int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
-//			 uint8_t chan,
-//			 uint32_t *buf,
-//			 uint16_t samples)
-//{
-//	int32_t ret;
-//
-//	uint32_t commands_data[3] = {0x1002, 0x0000,0x0000};
-//	struct spi_engine_offload_message msg;
-//	uint32_t spi_eng_msg_cmds[9] = {
-//			CS_LOW,
-//			WRITE(2),
-//			CS_HIGH,
-//			CS_LOW,
-//			WRITE(2),
-//		    CS_HIGH,
-//			CS_LOW,
-//		    WRITE_READ(2),
-//			CS_HIGH
-//	};
-//	no_os_pwm_enable(dev->trigger_pwm_desc);
-//
-//	ret = spi_engine_offload_init(dev->spi, dev->offload_init_param);
-//	if (ret != 0)
-//		return ret;
-//
-//	msg.commands = spi_eng_msg_cmds;
-//	msg.no_commands = NO_OS_ARRAY_SIZE(spi_eng_msg_cmds);
-//	msg.rx_addr = (uint32_t)buf;
-//	msg.commands_data = commands_data;
-//
-//	ret = spi_engine_offload_transfer(dev->spi, msg, samples);
-//	if (ret != 0)
-//		return ret;
-//
-//	return ret;
-//}
-
-//int32_t ad5592r_read_data_offload(struct ad5592r_dev *dev,
-//				  uint8_t chan,
-//				  uint32_t *buf,
-//				  uint16_t samples)
-//{
-//	int32_t ret;
-//	uint16_t adc_seq_value;
-//	uint32_t commands_data[3];
-//	struct spi_engine_offload_message msg;
-//
-//	// Comenzi SPI Engine pentru scrierea secvenței ADC și citirea valorii
-//	uint32_t spi_eng_msg_cmds[9] = {
-//		CS_LOW,
-//		WRITE(2),   // scriem ADC_SEQ
-//		CS_HIGH,
-//		CS_LOW,
-//		WRITE(2),   // dummy write pentru trigger?
-//		CS_HIGH,
-//		CS_LOW,
-//		WRITE_READ(2),  // citire ADC
-//		CS_HIGH
-//	};
-//
-//	if (!dev || !buf || chan > 7)
-//		return -EINVAL;
-//
-//	// Calculăm valoarea pentru registrul ADC_SEQ
-//	// Bitii [7:0] corespund canalelor 0-7
-//	adc_seq_value = (1 << chan);
-//
-//	commands_data[0] = (AD5592R_REG_ADC_SEQ << 11) | adc_seq_value; // Scriem în ADC_SEQ
-//	commands_data[1] = 0x0000; // Dummy write, poate fi personalizat
-//	commands_data[2] = 0x0000; // Dummy read (va fi umplut cu date)
-//
-//	no_os_pwm_enable(dev->trigger_pwm_desc);
-//
-//	ret = spi_engine_offload_init(dev->spi, dev->offload_init_param);
-//	if (ret != 0)
-//		return ret;
-//
-//	msg.commands = spi_eng_msg_cmds;
-//	msg.no_commands = NO_OS_ARRAY_SIZE(spi_eng_msg_cmds);
-//	msg.rx_addr = (uint32_t)buf;
-//	msg.commands_data = commands_data;
-//
-//	ret = spi_engine_offload_transfer(dev->spi, msg, samples);
-//	if (ret != 0)
-//		return ret;
-//
-//	return ret;
-//}
 
 int32_t ad5592r_read_data_spi_engine_offload(struct ad5592r_dev *dev,
 			 uint8_t chan,
