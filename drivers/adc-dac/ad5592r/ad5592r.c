@@ -399,7 +399,7 @@ int32_t ad5592r_read_data_spi_engine_offload(struct ad5592r_dev *dev,
 	if (ret != 0)
 		return ret;
 
-	no_os_mdelay(1000);
+	no_os_mdelay(100);
 
 	if (dev->dcache_invalidate_range)
 		dev->dcache_invalidate_range(msg.rx_addr, samples * sizeof(uint32_t));
@@ -473,8 +473,8 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
         dev->ops = &ad5592r_rw_ops;
     // Resetare software a dispozitivului AD5592R
     ret = ad5592r_software_reset(dev);
-    if (ret < 0)
-    	goto error_clkgen;
+    if (ret < 0){
+    	goto error_clkgen;}
 
 	no_os_mdelay(1000);
     // Setăm modurile canalelor
@@ -492,7 +492,9 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
 	    ret = ad5592r_set_channel_modes(dev);
 	    if (ret < 0)
 	        goto error_clkgen;
+
 	no_os_mdelay(1000);
+
     // Dacă se utilizează referință internă, actualizăm registrul PD (Power Down)
     if (init_param->int_ref) {
         ret = ad5592r_reg_read(dev, AD5592R_REG_PD, &temp_reg_val);
@@ -501,7 +503,8 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
 
         // Activăm referința internă
         temp_reg_val |= AD5592R_REG_PD_EN_REF;
-    no_os_mdelay(1000);
+
+   no_os_mdelay(1000);
         // Scriem valoarea în registrul PD
         ret = ad5592r_reg_write(dev, AD5592R_REG_PD, temp_reg_val);
         if (ret < 0)
@@ -510,10 +513,9 @@ int32_t ad5592r_init(struct ad5592r_dev **device,
     	ret = no_os_pwm_init(&dev->trigger_pwm_desc, init_param->trigger_pwm_init);
     	if (ret != 0)
     		goto error_spi;
-
-
     }
     *device = dev;
+
     no_os_mdelay(1000);
      //Dacă ajungem aici, inițializarea a avut succes
     return 0;

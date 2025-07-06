@@ -22,6 +22,9 @@ SRCS += $(DRIVERS)/api/no_os_spi.c \
 	$(DRIVERS)/axi_core/spi_engine/spi_engine.c \
 	$(NO-OS)/util/no_os_util.c \
 	$(NO-OS)/util/no_os_alloc.c \
+	$(DRIVERS)/mcurses/src/mcurses.c \
+	$(DRIVERS)/mcurses/src/editor.c \
+	$(DRIVERS)/mcurses/src/hexedit.c \
 	$(NO-OS)/util/no_os_mutex.c
 SRCS +=	$(PLATFORM_DRIVERS)/xilinx_axi_io.c \
 	$(PLATFORM_DRIVERS)/xilinx_gpio.c \
@@ -46,6 +49,10 @@ INCS += $(DRIVERS)/adc-dac/ad5592r/ad5592r.h \
 	$(DRIVERS)/axi_core/clk_axi_clkgen/clk_axi_clkgen.h \
 	$(DRIVERS)/axi_core/axi_pwmgen/axi_pwm_extra.h \
 	$(DRIVERS)/axi_core/spi_engine/spi_engine.h \
+	$(DRIVERS)/mcurses/src/mcurses.h \
+	$(DRIVERS)/mcurses/src/mcurses-config.h \
+	$(DRIVERS)/mcurses/src/editor.h \
+	$(DRIVERS)/mcurses/src/hexedit.h \
 	$(DRIVERS)/axi_core/spi_engine/spi_engine_private.h
 INCS +=	$(PLATFORM_DRIVERS)/$(PLATFORM)_spi.h \
 	$(PLATFORM_DRIVERS)/$(PLATFORM)_irq.h \

@@ -63,6 +63,6 @@ int32_t ad5592r_reg_read(struct ad5592r_dev *dev, uint8_t reg,
 int32_t ad5592r_gpio_read(struct ad5592r_dev *dev, uint8_t *value);
 int32_t ad5592r_init(struct ad5592r_dev **dev,
 		     struct ad5592r_init_param *init_param);
-int32_t ad5592r_read_data(struct ad5592r_dev *dev,uint8_t chan, uint32_t *buf, uint16_t samples);
+int32_t ad5592r_read_data_spi_engine_offload(struct ad5592r_dev *dev,uint8_t chan, uint32_t *buf, uint16_t samples);
 
 #endif /* AD5592R_H_ */

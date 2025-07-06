@@ -647,10 +647,11 @@ int32_t axi_adc_init_finish(struct axi_adc *adc)
 int32_t axi_adc_init(struct axi_adc **adc_core,
 		     const struct axi_adc_init *init)
 {
-	struct axi_adc *adc;
+    struct axi_adc *adc;
 	int32_t ret;
 	uint8_t ch;
 
+	adc = (struct axi_adc *)no_os_malloc(sizeof(*adc));
 	ret = axi_adc_init_begin(&adc, init);
 	if (ret)
 		return ret;
