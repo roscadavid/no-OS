@@ -115,7 +115,7 @@ int main(void)
     			.channel = 0,
     		};
 	struct no_os_pwm_init_param trigger_pwm_init = {
-		.period_ns = 5000,//1000	/* 1Mhz */ //f=400KSP
+		.period_ns = 5000,//1000	 //f=400KSP
 		.duty_cycle_ns = 10,
 		.polarity = NO_OS_PWM_POLARITY_HIGH,
 		.platform_ops = &axi_pwm_ops,
